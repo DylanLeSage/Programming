@@ -2,6 +2,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+typedef enum
+{
+    HOOKER_ID = 0,
+    HOOKER_NAME = 1,
+    HOOKER_AGE = 2,
+    HOOKER_STAT = 3,
+    HOOKER_SKILL = 4,
+    HOOKER_PRICE = 5,
+    HOOKER_ATT_COUNT
+} hparse_e;
 /*
 - Unikatni ID
 - Jmeno zamestnance
@@ -11,7 +22,7 @@
 - Cena za full service
 */
 struct Hooker
- {
+{
         int id;
         char name[256];
         int age;
@@ -37,10 +48,9 @@ int main()
     char line[1024];
 
     unsigned  hooker_cnt = 0; /// counter of filled structures
-    unsigned  i = 1;
+    hparse_e  i = HOOKER_ID;
     unsigned  j = 0;
     char * token;
-    int parse_int;
 
     /*** BEGIN Hooker open file */
     fd = fopen(file_name, "r");
@@ -64,49 +74,41 @@ int main()
 
             while ( token != NULL)
             {
-                switch (i) //Different cases
-                    {
-                        case 1 :
-                            hooker[hooker_cnt].id  = atoi(token);
-                            i++;
-                            printf("Item loaded %d\n",hooker[hooker_cnt].id);
-                            break;
-                        case 2 :
-                            strncpy(hooker[hooker_cnt].name, token, sizeof(hooker[hooker_cnt].name)-1 );
-                            hooker[hooker_cnt].name[sizeof(hooker[hooker_cnt].name)-1] = '\0';
-                            i++;
-                            printf("Item loaded %s\n",hooker[hooker_cnt].name);
-                            break;
-                        case 3 :
-                            hooker[hooker_cnt].age  = atoi(token);
-                            i++;
-                            printf("Item loaded %d\n", hooker[hooker_cnt].age);
-                            break;
-                        case 4 :
-                            hooker[hooker_cnt].status  = atoi(token);
-                            i++;
-                            printf("Item loaded %d\n", hooker[hooker_cnt].status);
-                            break;
-                        case 5 :
-                            hooker[hooker_cnt].skill  = atoi(token);
-                            i++;
-                            printf("Item loaded %d\n", hooker[hooker_cnt].skill);
-                            break;
-                        case 6 :
-                            hooker[hooker_cnt].price  = atoi(token);
-                            i++;
-                            printf("Item loaded %d\n", hooker[hooker_cnt].price);
-                            break;
-                        case 7 :
-                            printf("All data have been loaded.\n");
-                            i=1;
-                            system("pause\n");
-                            break;
-                    }
+                #define HPARSE_HELPER_INT(X) \
+                                    X(HOOKER_ID,    id)\
+                                    X(HOOKER_AGE,   age)\
+                                    X(HOOKER_STAT,  status)\
+                                    X(HOOKER_SKILL, skill)\
+                                    X(HOOKER_PRICE, price)
 
-            token = strtok(NULL, ";" );
-            parse_int = !parse_int;
+                #define HPARSE_HELPER_STRING(X) \
+                                    X(HOOKER_NAME, name)
+                switch(i)
+                {
+
+                #define X(enum, att) \
+                    case enum: \
+                        hooker[hooker_cnt].att  = atoi(token); \
+                        printf("Item loaded %d\n",hooker[hooker_cnt].att);\
+                        break;
+                HPARSE_HELPER_INT(X)
+                #undef X
+
+                #define X(enum, att) \
+                    case enum: \
+                            strncpy(hooker[hooker_cnt].att, token, sizeof(hooker[hooker_cnt].att)-1 );\
+                            hooker[hooker_cnt].att[sizeof(hooker[hooker_cnt].att)-1] = '\0';\
+                            printf("Item loaded %s\n",hooker[hooker_cnt].att);\
+                            break;
+                HPARSE_HELPER_STRING(X)
+                #undef X
+
+                default:
+                    printf("Unknown parse state!!\n");
                 }
+
+                i = (i + 1) % HOOKER_ATT_COUNT;
+                token = strtok(NULL, ";" );
        }
 
     for( j = 0; j < hooker_cnt; j++)
